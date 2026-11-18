@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-apk:
-    name: Build Debug APK
+    name: Build Signed Release APK
     runs-on: ubuntu-latest
 
     steps:
@@ -46,15 +46,34 @@ jobs:
       - name: Sync Capacitor Android
         run: npx cap sync android
 
-      - name: Build Debug APK with Gradle
+      - name: Build & Sign Release APK
         run: |
           chmod +x android/gradlew
           cd android
-          ./gradlew assembleDebug
+          ./gradlew assembleRelease
+          cd ..
 
-      - name: Upload APK Artifact
+          BUILD_TOOLS=$(ls -d "$ANDROID_HOME/build-tools"/* | sort -V | tail -n 1)
+          UNSIGNED_APK="android/app/build/outputs/apk/release/app-release-unsigned.apk"
+          ALIGNED_APK="android/app/build/outputs/apk/release/app-release-aligned.apk"
+          SIGNED_APK="android/app/build/outputs/apk/release/SmartExpenseOfficePro-release.apk"
+
+          "$BUILD_TOOLS/zipalign" -p -f 4 "$UNSIGNED_APK" "$ALIGNED_APK"
+
+          keytool -genkeypair -v -keystore release.keystore -alias smartexpense \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass SmartExpense2026 -keypass SmartExpense2026 \
+            -dname "CN=Smart Expense Office Pro, OU=Mobile, O=SmartExpense, L=Dhaka, S=Dhaka, C=BD"
+
+          "$BUILD_TOOLS/apksigner" sign --ks release.keystore --ks-key-alias smartexpense \
+            --ks-pass pass:SmartExpense2026 --key-pass pass:SmartExpense2026 \
+            --out "$SIGNED_APK" "$ALIGNED_APK"
+
+          "$BUILD_TOOLS/apksigner" verify "$SIGNED_APK"
+
+      - name: Upload Signed Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: daily-expense-tracker-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: smart-expense-office-pro-release-apk
+          path: android/app/build/outputs/apk/release/SmartExpenseOfficePro-release.apk
           if-no-files-found: error
