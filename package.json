@@ -1,7 +1,7 @@
 {
-  "name": "smart-expense-office-pro",
+  "name": "rimx-expense",
   "version": "1.0.0",
-  "description": "Offline-first Personal & Office Dual-Ledger Expense Tracker (Smart Expense & Office Pro) with Capacitor & GitHub Actions APK build",
+  "description": "RimX Expense - Offline-first Personal & Office Dual-Ledger Expense Tracker with Capacitor & GitHub Actions APK build",
   "private": true,
   "scripts": {
     "build:css": "tailwindcss -i ./src/input.css -o ./www/tailwind.css --minify",
