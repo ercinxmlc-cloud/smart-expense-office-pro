@@ -1,0 +1,8 @@
+{
+  "appId": "com.smartexpense.officepro",
+  "appName": "Smart Expense & Office Pro",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
