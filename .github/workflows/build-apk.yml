@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-apk:
-    name: Build Signed Release APK
+    name: Build RimX Expense Signed Release APK
     runs-on: ubuntu-latest
 
     steps:
@@ -43,6 +43,26 @@ jobs:
             npx cap add android
           fi
 
+      - name: Apply RimX App Icon to Android Launcher
+        run: |
+          if ! command -v convert >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y imagemagick
+          fi
+          if [ ! -f "www/icon.png" ] && [ -f "www/favicon.svg" ]; then
+            convert -background none -density 300 www/favicon.svg -resize 512x512 www/icon.png
+          fi
+          if [ -f "www/icon.png" ]; then
+            for spec in "mdpi:48" "hdpi:72" "xhdpi:96" "xxhdpi:144" "xxxhdpi:192"; do
+              dir="${spec%%:*}"
+              size="${spec##*:}"
+              target="android/app/src/main/res/mipmap-${dir}"
+              mkdir -p "$target"
+              convert www/icon.png -resize "${size}x${size}" "${target}/ic_launcher.png"
+              convert www/icon.png -resize "${size}x${size}" "${target}/ic_launcher_round.png"
+              convert www/icon.png -resize "${size}x${size}" "${target}/ic_launcher_foreground.png"
+            done
+          fi
+
       - name: Sync Capacitor Android
         run: npx cap sync android
 
@@ -56,17 +76,17 @@ jobs:
           BUILD_TOOLS=$(ls -d "$ANDROID_HOME/build-tools"/* | sort -V | tail -n 1)
           UNSIGNED_APK="android/app/build/outputs/apk/release/app-release-unsigned.apk"
           ALIGNED_APK="android/app/build/outputs/apk/release/app-release-aligned.apk"
-          SIGNED_APK="android/app/build/outputs/apk/release/SmartExpenseOfficePro-release.apk"
+          SIGNED_APK="android/app/build/outputs/apk/release/RimX-Expense-release.apk"
 
           "$BUILD_TOOLS/zipalign" -p -f 4 "$UNSIGNED_APK" "$ALIGNED_APK"
 
-          keytool -genkeypair -v -keystore release.keystore -alias smartexpense \
+          keytool -genkeypair -v -keystore release.keystore -alias rimxexpense \
             -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass SmartExpense2026 -keypass SmartExpense2026 \
-            -dname "CN=Smart Expense Office Pro, OU=Mobile, O=SmartExpense, L=Dhaka, S=Dhaka, C=BD"
+            -storepass RimXExpense2026 -keypass RimXExpense2026 \
+            -dname "CN=RimX Expense, OU=Mobile, O=RimX, L=Dhaka, S=Dhaka, C=BD"
 
-          "$BUILD_TOOLS/apksigner" sign --ks release.keystore --ks-key-alias smartexpense \
-            --ks-pass pass:SmartExpense2026 --key-pass pass:SmartExpense2026 \
+          "$BUILD_TOOLS/apksigner" sign --ks release.keystore --ks-key-alias rimxexpense \
+            --ks-pass pass:RimXExpense2026 --key-pass pass:RimXExpense2026 \
             --out "$SIGNED_APK" "$ALIGNED_APK"
 
           "$BUILD_TOOLS/apksigner" verify "$SIGNED_APK"
@@ -74,6 +94,6 @@ jobs:
       - name: Upload Signed Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: smart-expense-office-pro-release-apk
-          path: android/app/build/outputs/apk/release/SmartExpenseOfficePro-release.apk
+          name: rimx-expense-release-apk
+          path: android/app/build/outputs/apk/release/RimX-Expense-release.apk
           if-no-files-found: error
