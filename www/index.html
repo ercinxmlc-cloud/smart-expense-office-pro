@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#1d4ed8" id="meta-theme-color" />
+  <title>Smart Expense &amp; Office Pro</title>
+  <link rel="stylesheet" href="tailwind.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased selection:bg-blue-200">
+  <div id="app" class="min-h-screen max-w-md mx-auto bg-slate-50 shadow-sm flex flex-col pb-20">
+
+    <!-- Top App Bar & Dual Mode Switcher -->
+    <header id="app-header" class="bg-blue-700 text-white px-4 pt-4 pb-5 rounded-b-3xl shadow-md sticky top-0 z-20 safe-top transition-colors duration-200">
+      <div class="flex items-center justify-between mb-3">
+        <div class="min-w-0">
+          <h1 class="text-base font-extrabold tracking-tight truncate">Smart Expense &amp; Office Pro</h1>
+          <p id="current-date-label" class="text-[11px] text-white/80"></p>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button
+            id="btn-export-pdf"
+            type="button"
+            class="bg-white/15 hover:bg-white/25 active:scale-95 transition text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-xl border border-white/20"
+            title="Print / Save PDF"
+          >
+            🖨️ PDF
+          </button>
+          <button
+            id="btn-export-csv"
+            type="button"
+            class="bg-white/15 hover:bg-white/25 active:scale-95 transition text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-xl border border-white/20"
+            title="Export CSV Report"
+          >
+            📥 CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Segmented Mode Switcher: Personal vs Office -->
+      <div class="bg-black/20 p-1 rounded-2xl flex gap-1 mb-3">
+        <button
+          id="mode-personal-btn"
+          type="button"
+          class="flex-1 py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 bg-white text-blue-700 shadow-sm"
+        >
+          <span>👤</span>
+          <span>ব্যক্তিগত (Personal)</span>
+        </button>
+        <button
+          id="mode-office-btn"
+          type="button"
+          class="flex-1 py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-white/85 hover:text-white"
+        >
+          <span>🏢</span>
+          <span>অফিস (Office)</span>
+        </button>
+      </div>
+
+      <!-- Dual Wallet Cards -->
+      <div class="grid grid-cols-2 gap-2.5 mb-2.5">
+        <div class="bg-white/15 backdrop-blur-sm rounded-2xl p-3 border border-white/15">
+          <div class="flex items-center gap-1.5 text-white/85 text-[11px] font-medium mb-1">
+            <span>💵</span>
+            <span id="cash-wallet-label">হাতের ক্যাশ (Cash)</span>
+          </div>
+          <div id="dash-cash" class="text-lg font-extrabold text-white truncate">৳ 0</div>
+        </div>
+        <div class="bg-white/15 backdrop-blur-sm rounded-2xl p-3 border border-white/15">
+          <div class="flex items-center gap-1.5 text-white/85 text-[11px] font-medium mb-1">
+            <span>📱</span>
+            <span>ডিজিটাল (বিকাশ/ব্যাংক)</span>
+          </div>
+          <div id="dash-digital" class="text-lg font-extrabold text-white truncate">৳ 0</div>
+        </div>
+      </div>
+
+      <!-- Monthly Expense Bar -->
+      <div class="bg-black/20 rounded-2xl px-3.5 py-2 flex items-center justify-between border border-white/10">
+        <div class="flex items-center gap-2">
+          <span class="text-sm">📊</span>
+          <span class="text-[11px] font-medium text-white/90">মাসিক মোট খরচ (<span id="current-month-name">এই মাস</span>)</span>
+        </div>
+        <div id="dash-monthly-expense" class="text-sm font-extrabold text-amber-300">৳ 0</div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 px-4 pt-4 space-y-5">
+
+      <!-- Wallet Actions: Add Money / Cash In & Cash Out / Transfer -->
+      <div id="wallet-actions-row" class="grid grid-cols-2 gap-2.5">
+        <button
+          id="btn-open-cash-in"
+          type="button"
+          class="bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition text-white font-bold py-2.5 px-3 rounded-2xl shadow-sm flex items-center justify-center gap-1.5 text-xs"
+        >
+          <span class="text-base leading-none">+</span>
+          <span>টাকা যোগ (Cash In)</span>
+        </button>
+        <button
+          id="btn-open-transfer"
+          type="button"
+          class="bg-slate-800 hover:bg-slate-900 active:scale-[0.98] transition text-white font-bold py-2.5 px-3 rounded-2xl shadow-sm flex items-center justify-center gap-1.5 text-xs"
+        >
+          <span>🔄</span>
+          <span>ক্যাশ-আউট / ট্রান্সফার</span>
+        </button>
+      </div>
+
+      <!-- Zero-Friction Quick Expense Buttons -->
+      <section id="quick-expense-section">
+        <div class="flex items-center justify-between mb-2.5">
+          <h2 id="quick-section-title" class="text-sm font-bold text-slate-700">দ্রুত খরচ যোগ করুন</h2>
+          <span id="quick-mode-badge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Personal</span>
+        </div>
+        <div id="quick-categories-grid" class="grid grid-cols-3 gap-2.5">
+          <!-- Rendered by app.js -->
+        </div>
+      </section>
+
+      <!-- Main Tabs: History | Analytics | Pawna/Dena -->
+      <section>
+        <div id="main-tabs-bar" class="flex bg-slate-200/80 p-1 rounded-xl mb-3">
+          <button
+            id="tab-history"
+            type="button"
+            class="flex-1 py-2 text-[11px] font-bold rounded-lg transition bg-white text-blue-700 shadow-sm"
+          >
+            লেনদেন
+          </button>
+          <button
+            id="tab-breakdown"
+            type="button"
+            class="flex-1 py-2 text-[11px] font-bold rounded-lg transition text-slate-600"
+          >
+            খাতওয়ারি
+          </button>
+          <button
+            id="tab-dues"
+            type="button"
+            class="flex-1 py-2 text-[11px] font-bold rounded-lg transition text-slate-600"
+          >
+            পাওনা / দেনা
+          </button>
+        </div>
+
+        <!-- Panel 1: History -->
+        <div id="panel-history" class="space-y-3">
+          <div class="flex items-center justify-between no-print">
+            <div class="flex gap-1.5">
+              <button data-filter="today" class="filter-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-600 text-white">আজ</button>
+              <button data-filter="month" class="filter-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-200 text-slate-600">এই মাস</button>
+              <button data-filter="all" class="filter-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-200 text-slate-600">সব</button>
+            </div>
+            <span id="history-count" class="text-xs text-slate-400">0টি লেনদেন</span>
+          </div>
+          <div id="transaction-list" class="space-y-2">
+            <!-- Rendered by app.js -->
+          </div>
+        </div>
+
+        <!-- Panel 2: Category Breakdown -->
+        <div id="panel-breakdown" class="hidden space-y-2.5">
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">এই মাসের খাতওয়ারি খরচ</h3>
+            <div id="breakdown-list" class="space-y-3">
+              <!-- Rendered by app.js -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 3: Pawna / Dena (Dues & Receivable Ledger) -->
+        <div id="panel-dues" class="hidden space-y-3">
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3">
+              <p class="text-[11px] font-semibold text-emerald-700 mb-0.5">মোট পাবো (Receivable)</p>
+              <p id="dues-total-receivable" class="text-base font-extrabold text-emerald-800">৳ 0</p>
+            </div>
+            <div class="bg-rose-50 border border-rose-200 rounded-2xl p-3">
+              <p class="text-[11px] font-semibold text-rose-700 mb-0.5">মোট দিতে হবে (Payable)</p>
+              <p id="dues-total-payable" class="text-base font-extrabold text-rose-800">৳ 0</p>
+            </div>
+          </div>
+
+          <button
+            id="btn-open-add-due"
+            type="button"
+            class="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-[0.99] transition text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5"
+          >
+            <span>+</span>
+            <span>পাওনা / দেনা এন্ট্রি যোগ করুন</span>
+          </button>
+
+          <div id="dues-person-list" class="space-y-2">
+            <!-- Rendered by app.js -->
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal 1: Quick Expense / Cash-In / Transfer / Edit Modal -->
+  <div id="entry-modal" class="fixed inset-0 z-50 hidden items-end justify-center bg-slate-900/50 backdrop-blur-[1px]">
+    <div class="w-full max-w-md bg-white rounded-t-3xl shadow-2xl p-4 pb-6 animate-slide-up safe-bottom max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span id="modal-icon" class="text-2xl">☕</span>
+          <div>
+            <h3 id="modal-title" class="text-base font-bold text-slate-800">চা-নাস্তা</h3>
+            <p id="modal-subtitle" class="text-[11px] text-slate-500">খরচের পরিমাণ লিখুন</p>
+          </div>
+        </div>
+        <button id="btn-close-modal" type="button" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center font-bold">✕</button>
+      </div>
+
+      <!-- Amount Display -->
+      <div class="bg-slate-100 rounded-2xl px-4 py-2.5 mb-3 flex items-center justify-between border border-slate-200">
+        <span class="text-2xl font-bold text-slate-700">৳</span>
+        <span id="keypad-display" class="text-3xl font-extrabold text-slate-900 tracking-tight">0</span>
+      </div>
+
+      <!-- Payment Source Toggle (Expense & Cash-In) -->
+      <div id="wallet-source-group" class="grid grid-cols-2 gap-2 mb-3">
+        <button type="button" data-method="cash" class="method-toggle-btn py-2.5 px-3 rounded-xl text-xs font-bold border-2 border-blue-600 bg-blue-50 text-blue-800 flex items-center justify-center gap-1.5">
+          <span>💵</span>
+          <span>Cash (পকেট)</span>
+        </button>
+        <button type="button" data-method="digital" class="method-toggle-btn py-2.5 px-3 rounded-xl text-xs font-bold border-2 border-slate-200 bg-white text-slate-600 flex items-center justify-center gap-1.5">
+          <span>📱</span>
+          <span>Digital (বিকাশ/ব্যাংক)</span>
+        </button>
+      </div>
+
+      <!-- Transfer Direction Toggle (Transfer mode) -->
+      <div id="transfer-direction-group" class="hidden grid grid-cols-2 gap-2 mb-3">
+        <button type="button" data-transfer="digital_to_cash" class="transfer-dir-btn py-2.5 px-2 rounded-xl text-[11px] font-bold border-2 border-blue-600 bg-blue-50 text-blue-800 text-center">
+          🏧 ক্যাশ-আউট (বিকাশ → ক্যাশ)
+        </button>
+        <button type="button" data-transfer="cash_to_digital" class="transfer-dir-btn py-2.5 px-2 rounded-xl text-[11px] font-bold border-2 border-slate-200 bg-white text-slate-600 text-center">
+          📲 ক্যাশ-ইন (ক্যাশ → বিকাশ)
+        </button>
+      </div>
+
+      <!-- Optional Note / Client Name -->
+      <input
+        id="modal-note"
+        type="text"
+        maxlength="80"
+        placeholder="নোট / ক্লায়েন্টের নাম (ঐচ্ছিক)"
+        class="w-full px-3.5 py-2 mb-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500"
+      />
+
+      <!-- Camera / Voucher Capture (shown in Expense mode) -->
+      <div id="receipt-capture-group" class="mb-3">
+        <input id="receipt-file-input" type="file" accept="image/*" capture="environment" class="hidden" />
+        <div class="flex items-center gap-2">
+          <button
+            id="btn-capture-receipt"
+            type="button"
+            class="flex-1 py-2 px-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5"
+          >
+            <span>📷</span>
+            <span>ভাউচার/মেমোর ছবি তুলুন</span>
+          </button>
+          <div id="receipt-preview-wrap" class="hidden relative">
+            <img id="receipt-preview-img" src="" alt="Receipt" class="w-10 h-10 object-cover rounded-lg border border-slate-300" />
+            <button id="btn-remove-receipt" type="button" class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center shadow">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Numeric Keypad -->
+      <div class="grid grid-cols-3 gap-2 mb-3 select-none">
+        <button type="button" data-key="1" class="keypad-btn">1</button>
+        <button type="button" data-key="2" class="keypad-btn">2</button>
+        <button type="button" data-key="3" class="keypad-btn">3</button>
+        <button type="button" data-key="4" class="keypad-btn">4</button>
+        <button type="button" data-key="5" class="keypad-btn">5</button>
+        <button type="button" data-key="6" class="keypad-btn">6</button>
+        <button type="button" data-key="7" class="keypad-btn">7</button>
+        <button type="button" data-key="8" class="keypad-btn">8</button>
+        <button type="button" data-key="9" class="keypad-btn">9</button>
+        <button type="button" data-key="." class="keypad-btn">.</button>
+        <button type="button" data-key="0" class="keypad-btn">0</button>
+        <button type="button" data-key="backspace" class="keypad-btn text-rose-600">⌫</button>
+      </div>
+
+      <!-- Save / Clear -->
+      <div class="flex gap-2">
+        <button id="btn-clear-keypad" type="button" class="px-4 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-sm hover:bg-slate-200 active:scale-95 transition">
+          মুছুন
+        </button>
+        <button id="btn-save-entry" type="button" class="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-sm active:scale-[0.99] transition">
+          সেভ করুন ✓
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Add Due (Pawna / Dena) Modal -->
+  <div id="due-modal" class="fixed inset-0 z-50 hidden items-end justify-center bg-slate-900/50 backdrop-blur-[1px]">
+    <div class="w-full max-w-md bg-white rounded-t-3xl shadow-2xl p-4 pb-6 animate-slide-up safe-bottom">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-base font-bold text-slate-800">পাওনা / দেনা যোগ করুন</h3>
+        <button id="btn-close-due-modal" type="button" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold">✕</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">ব্যক্তি / প্রতিষ্ঠানের নাম</label>
+          <input id="due-person-name" type="text" maxlength="50" placeholder="যেমন: করিম সাহেব / রফিক" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" data-due-type="receivable" class="due-type-btn py-2.5 px-3 rounded-xl text-xs font-bold border-2 border-emerald-600 bg-emerald-50 text-emerald-800">
+            পাবো / Receivable
+          </button>
+          <button type="button" data-due-type="payable" class="due-type-btn py-2.5 px-3 rounded-xl text-xs font-bold border-2 border-slate-200 bg-white text-slate-600">
+            দেবো / Payable
+          </button>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">টাকার পরিমাণ (৳)</label>
+          <input id="due-amount" type="number" inputmode="decimal" min="1" step="any" placeholder="0" class="w-full px-3.5 py-2.5 text-sm font-bold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">নোট (ঐচ্ছিক)</label>
+          <input id="due-note" type="text" maxlength="80" placeholder="যেমন: বিল বাকি / ধার দেওয়া" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <button id="btn-save-due" type="button" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-sm active:scale-[0.99] transition">
+          সেভ করুন ✓
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Person Due History Detail Modal -->
+  <div id="person-due-modal" class="fixed inset-0 z-50 hidden items-end justify-center bg-slate-900/50 backdrop-blur-[1px]">
+    <div class="w-full max-w-md bg-white rounded-t-3xl shadow-2xl p-4 pb-6 animate-slide-up safe-bottom max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h3 id="person-due-title" class="text-base font-bold text-slate-800">ব্যক্তির হিসাব</h3>
+          <p id="person-due-subtitle" class="text-xs text-slate-500"></p>
+        </div>
+        <button id="btn-close-person-due" type="button" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold">✕</button>
+      </div>
+      <div id="person-due-items" class="flex-1 overflow-y-auto space-y-2 pr-0.5">
+        <!-- Rendered by app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Full-Screen Receipt Lightbox -->
+  <div id="lightbox-modal" class="fixed inset-0 z-[60] hidden flex-col items-center justify-center bg-black/90 p-4">
+    <button id="btn-close-lightbox" type="button" class="self-end mb-3 px-3.5 py-1.5 rounded-full bg-white/15 text-white text-xs font-bold hover:bg-white/25">
+      ✕ বন্ধ করুন
+    </button>
+    <img id="lightbox-img" src="" alt="Voucher Receipt" class="max-w-full max-h-[80vh] rounded-xl object-contain shadow-2xl" />
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] hidden bg-slate-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg">
+    সেভ হয়েছে!
+  </div>
+
+  <script src="app.js"></script>
+</body>
+  </html>
